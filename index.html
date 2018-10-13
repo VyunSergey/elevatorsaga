@@ -101,36 +101,46 @@
 }
     </script>
     <script type="text/plain" id="devtest-elev-implementation">
-{
-    init: function(elevators, floors) {
-        var selectElevatorForFloorPickup = function(floorNum) {
-            return _.max(elevators, function(e) {
-                return (_.contains(e.destinationQueue, floorNum) ? 4 : 0) +
-                    (-e.destinationQueue.length*e.destinationQueue.length) +
-                    (-e.loadFactor()*e.loadFactor() * 3);
-            });
-        };
+    {
+        init: function(elevators, floors) {
+            var selectElevatorForFloorPickup = function(floorNum) {
+                return _.max(elevators, function(elevator) {
+                    return (_.contains(elevator.destinationQueue, floorNum) ? 4 : 0) +
+                        (-elevator.destinationQueue.length * elevator.destinationQueue.length) +
+                        (-elevator.loadFactor() * elevator.loadFactor() * 3);
+                });
+            };
 
-        _.each(floors, function(floor) {
-            floor.on("down_button_pressed up_button_pressed", function() {
-                var elevator = selectElevatorForFloorPickup(floor.level);
-                if(!_.contains(elevator.destinationQueue, floor.level)) {
-                    elevator.goToFloor(floor.level);
-                }
+            var selectFloorForIdle = function() {
+                return 0;
+            };
+
+            var sleectFloorForButtonPressed = function(floorNum) {
+                return floorNum;
+            };
+
+            _.each(floors, function(floor) {
+                floor.on("down_button_pressed up_button_pressed", function() {
+                    var elevator = selectElevatorForFloorPickup(floor.level);
+                    if(!_.contains(elevator.destinationQueue, floor.level)) {
+                        elevator.goToFloor(floor.level);
+                    }
+                });
             });
-        });
-        _.each(elevators, function(elevator) {
-            elevator.on("floor_button_pressed", function(floorNum) {
-                elevator.goToFloor(floorNum);
+
+            _.each(elevators, function(elevator) {
+                elevator.on("floor_button_pressed", function(floorNum) {
+                    elevator.goToFloor(sleectFloorForButtonPressed(floorNum));
+                });
+                elevator.on("idle", function() {
+                    elevator.goToFloor(selectFloorForIdle());
+                });
             });
-            elevator.on("idle", function() {
-                elevator.goToFloor(0);
-            });
-        });
-    },
-    update: function(dt, elevators, floors) {
+        },
+            update: function(dt, elevators, floors) {
+                // We normally don't need to do anything here
+            }
     }
-}
     </script>
 
 

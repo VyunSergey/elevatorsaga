@@ -60,6 +60,8 @@ var requireDemo = function() {
 
 /* jshint laxcomma:true */
 var challenges = [
+     {options: {floorCount: 17, elevatorCount: 7, spawnRate: 1.5, elevatorCapacities: [5]}, condition: requireDemo()}
+/*
      {options: {floorCount: 3, elevatorCount: 1, spawnRate: 0.3}, condition: requireUserCountWithinTime(15, 60)}
     ,{options: {floorCount: 5, elevatorCount: 1, spawnRate: 0.4}, condition: requireUserCountWithinTime(20, 60)}
     ,{options: {floorCount: 5, elevatorCount: 1, spawnRate: 0.5, elevatorCapacities: [6]}, condition: requireUserCountWithinTime(23, 60)}
@@ -84,5 +86,7 @@ var challenges = [
     ,{options: {floorCount: 21, elevatorCount: 8, spawnRate: 1.5, elevatorCapacities: [6,8]}, condition: requireUserCountWithinTimeWithMaxWaitTime(2675, 1800, 45)}
 
     ,{options: {floorCount: 21, elevatorCount: 8, spawnRate: 1.5, elevatorCapacities: [6,8]}, condition: requireDemo()}
+*/
+
 ];
 /* jshint laxcomma:false */
