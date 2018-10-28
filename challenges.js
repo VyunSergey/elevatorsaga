@@ -51,16 +51,22 @@ var requireUserCountWithinMoves = function(userCount, moveLimit) {
     };
 };
 
-var requireDemo = function() {
+var requireDemo = function(userCount, timeLimit) {
     return {
-        description: "Perpetual demo",
-        evaluate: function() { return null; }
+        description: "Transport <span class='emphasis-color'>" + userCount + "</span> people using <span class='emphasis-color'>" + timeLimit.toFixed(0) + "</span> seconds or less",
+        evaluate: function(world) {
+          if(world.elapsedTime >= timeLimit || world.transportedCounter >= userCount) {
+              return world.elapsedTime <= timeLimit && world.transportedCounter >= userCount;
+          } else {
+              return null;
+          }
+        }
     };
 };
 
 /* jshint laxcomma:true */
 var challenges = [
-     {options: {floorCount: 17, elevatorCount: 7, spawnRate: 1.5, elevatorCapacities: [5]}, condition: requireDemo()}
+     {options: {floorCount: 16, elevatorCount: 8, spawnRate: 1.5, elevatorCapacities: [6]}, condition: requireDemo(100, 100)}
 /*
      {options: {floorCount: 3, elevatorCount: 1, spawnRate: 0.3}, condition: requireUserCountWithinTime(15, 60)}
     ,{options: {floorCount: 5, elevatorCount: 1, spawnRate: 0.4}, condition: requireUserCountWithinTime(20, 60)}

@@ -5,7 +5,7 @@ var createWorldCreator = function() {
     var creator = {};
 
     creator.createFloors = function(floorCount, floorHeight, errorHandler) {
-        var floors = _.map(_.range(floorCount), function(e, i) {
+        var floors = _.map(_.range(1, floorCount + 1), function(e, i) {
             var yPos = (floorCount - 1 - i) * floorHeight;
             var floor = asFloor({}, i, yPos, errorHandler);
             return floor;
@@ -31,7 +31,7 @@ var createWorldCreator = function() {
     creator.createRandomUser = function() {
         var weight = _.random(55, 100);
         var user = new User(weight);
-        if(_.random(40) === 0) {
+        if(_.random(5) === 0) {
             user.displayType = "child";
         } else if(_.random(1) === 0) {
             user.displayType = "female";
@@ -184,7 +184,7 @@ var createWorldCreator = function() {
                     users.splice(i, 1);
                 }
             }
-            
+
             recalculateStats();
         };
 

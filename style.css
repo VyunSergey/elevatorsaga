@@ -276,7 +276,7 @@ button.right {
 }
 
 .elevator .directionindicator .fa{
-    color: rgba(255, 255, 255, 0.2);
+    color: rgba(124, 196, 244, 0.6);
 }
 
 .elevator .directionindicator .fa.activated{
@@ -289,7 +289,7 @@ button.right {
     width: 100%;
     font-size: 15px;
     text-align: center;
-    color: rgba(255, 255, 255, 0.3);
+    color: rgba(124, 196, 244, 0.6);
 }
 
 
@@ -301,7 +301,7 @@ button.right {
     text-align: center;
     font-size: 8px;
     line-height: 8px;
-    color: rgba(255, 255, 255, 0.3);
+    color: rgba(124, 196, 244, 0.6);
 }
 .elevator .buttonpress {
     cursor: pointer;
@@ -325,7 +325,7 @@ button.right {
     cursor: pointer;
     line-height: 50px;
     padding-left: 50px;
-    color: rgba(255, 255, 255, 0.2);
+    color: rgba(124, 196, 244, 0.6);
 }
 .floor .buttonindicator .activated {
     color: rgba(55, 255, 55, 1.0);
@@ -333,7 +333,7 @@ button.right {
 
 .floor .floornumber {
     position: absolute;
-    color: rgba(255, 255, 255, 0.15);
+    color: rgba(124, 196, 244, 0.6);
     font-size: 32px;
     line-height: 50px;
     padding-left: 10px;
