@@ -5,8 +5,10 @@ function Elevator(speedFloorsPerSec, floorCount, floorHeight, maxUsers) {
     Movable.call(this);
     var elevator = this;
 
-    elevator.ACCELERATION = floorHeight * 2.1;
-    elevator.DECELERATION = floorHeight * 2.6;
+    //elevator.ACCELERATION = floorHeight * 2.1;
+    elevator.ACCELERATION = floorHeight * 700;
+    //elevator.DECELERATION = floorHeight * 2.6;
+    elevator.DECELERATION = floorHeight * 700;
     elevator.MAXSPEED = floorHeight * speedFloorsPerSec;
     elevator.floorCount = floorCount;
     elevator.floorHeight = floorHeight;

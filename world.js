@@ -16,7 +16,8 @@ var createWorldCreator = function() {
         elevatorCapacities = elevatorCapacities || [4];
         var currentX = 200.0;
         var elevators = _.map(_.range(elevatorCount), function(e, i) {
-            var elevator = new Elevator(2.6, floorCount, floorHeight, elevatorCapacities[i%elevatorCapacities.length]);
+            //var elevator = new Elevator(2.6, floorCount, floorHeight, elevatorCapacities[i%elevatorCapacities.length]);
+            var elevator = new Elevator(700, floorCount, floorHeight, elevatorCapacities[i%elevatorCapacities.length]);
 
             // Move to right x position
             elevator.moveTo(currentX, null);
@@ -184,7 +185,7 @@ var createWorldCreator = function() {
                     users.splice(i, 1);
                 }
             }
-            
+
             recalculateStats();
         };
 
