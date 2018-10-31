@@ -1,0 +1,47 @@
+Statistics for Solution: aonsagers_solution
+Transported: 135
+Elapsed time: 100
+Transported per sec: 1.35
+Max waiting time: 23.85
+Avg waiting time: 10.92
+Number of floors travelled: 773
+
+Statistics for Solution: desjoerd_solution
+Transported: 132
+Elapsed time: 100
+Transported per sec: 1.32
+Max waiting time: 23.32
+Avg waiting time: 10.92
+Number of floors travelled: 762
+
+Statistics for Solution: elevatoralg
+Transported: 126
+Elapsed time: 100
+Transported per sec: 1.26
+Max waiting time: 26.33
+Avg waiting time: 11.74
+Number of floors travelled: 798
+
+Statistics for Solution: global_scheduler
+Transported: 133
+Elapsed time: 100
+Transported per sec: 1.33
+Max waiting time: 26.79
+Avg waiting time: 11.87
+Number of floors travelled: 820
+
+Statistics for Solution: n_elevator_moves_or_less
+Transported: 135
+Elapsed time: 100
+Transported per sec: 1.35
+Max waiting time: 24.43
+Avg waiting time: 10.9
+Number of floors travelled: 807
+
+Statistics for Solution: nichampagnes_solution
+Transported: 131
+Elapsed time: 100.01
+Transported per sec: 1.31
+Max waiting time: 25.49
+Avg waiting time: 11.03
+Number of floors travelled: 837

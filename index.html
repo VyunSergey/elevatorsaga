@@ -83,284 +83,142 @@
         <h5 class="error" style="display: {errorDisplay}"><i class="fa fa-warning error-color"></i> There is a problem with your code: {errorMessage}</h5>
     </script>
 
-    <script type="text/plain" id="default-elev-implementation">
+    <script type="text/plain" id="default-elev-implementation" src="aonsagers_solution.js">
     {
-        init: function(elevators, floors) {
-            var elevator = elevators[0]; // Let's use the first elevator
+      init: function(elevators, floors) {
+        var downQueue = [];
+        var upQueue = [];
+        var idleElevators = []
+        var topFloor = floors.length - 1;
 
-            // Whenever the elevator is idle (has no more queued destinations) ...
-            elevator.on("idle", function() {
-                // let's go to all the floors (or did we forget one?)
-                elevator.goToFloor(0);
-                elevator.goToFloor(1);
-            });
-        },
-        update: function(dt, elevators, floors) {
-            // We normally don't need to do anything here
+        var goToAndSetIndicator = function(elevator, floorNum) {
+          if (floorNum < elevator.currentFloor()) {
+            elevator.goingDownIndicator(true);
+            elevator.goingUpIndicator(false);
+          } else {
+            elevator.goingUpIndicator(true);
+            elevator.goingDownIndicator(false);
+          }
+          elevator.goToFloor(floorNum);
         }
+
+        var callElevator = function(queue, floorNum) {
+          // if there is an idle elevator, wake it up
+            if (idleElevators.length > 0) {
+              elevator = idleElevators.shift();
+              goToAndSetIndicator(elevator, floorNum);
+            } else {
+              // otherwise add it to the corresponding queue and wait for an elevator to pass
+              if (queue.indexOf(floorNum) < 0) queue.push(floorNum);
+              queue = downQueue.sort();
+            }
+        }
+
+        _.each(elevators, function(elevator) {
+
+          elevator.on("idle", function() {
+            // see if there's anyone waiting
+            if (upQueue.length + downQueue.length > 0) {
+              // if we were going up, go to the highest floor with a person waiting
+              // otherwise, go to the lowest floor with a person waiting
+              if (elevator.goingUpIndicator()) {
+                floorNum = (downQueue.length > 0 ? downQueue.pop() : upQueue.pop())
+              } else {
+                floorNum = (upQueue.length > 0 ? upQueue.shift() : downQueue.shift())
+              }
+              goToAndSetIndicator(elevator, floorNum);
+            } else {
+              // if nobody was waiting, record that this elevator is idle, so it can be woken up later
+              idleElevators.push(elevator);
+              elevator.goingDownIndicator(false);
+              elevator.goingUpIndicator(false);
+            }
+          });
+
+          elevator.on("floor_button_pressed", function(floorNum) {
+            // add the new floor to the queue if it wasn't already requested
+            if (elevator.destinationQueue.indexOf(floorNum) < 0 ) {
+              elevator.destinationQueue.push(floorNum);
+              // sort to make sure we visit floors in order
+              elevator.destinationQueue = elevator.destinationQueue.sort();
+              if (elevator.goingDownIndicator()) {
+                elevator.destinationQueue = elevator.destinationQueue.reverse();
+              }
+              // apply the changes
+              elevator.checkDestinationQueue();
+            }
+          });
+
+          elevator.on("stopped_at_floor", function(floorNum) {
+              if (floorNum == 0) {
+                // start moving up once we reach the bottom
+                elevator.goingDownIndicator(false);
+                elevator.goingUpIndicator(true);
+              } else if (floorNum == topFloor) {
+                // start moving down once we reach the top
+                elevator.goingUpIndicator(false);
+                elevator.goingDownIndicator(true);
+              }
+              else if (elevator.destinationQueue.length == 0) {
+                // if this was our final stop, pick up anybody here
+                // if we end up idling, then these will both get set to false
+                elevator.goingUpIndicator(true);
+                elevator.goingDownIndicator(true);
+              }
+              // remove this floor from the corresponding queue if we picked someone up
+              if (elevator.goingUpIndicator()) {
+                index = upQueue.indexOf(floorNum);
+                if (index >= 0) upQueue.splice(index, 1);
+              } else if (elevator.goingDownIndicator()) {
+                index = downQueue.indexOf(floorNum);
+                if (index >= 0) downQueue.splice(index, 1);
+              }
+          });
+
+          elevator.on("passing_floor", function(floorNum, direction) {
+            // check if there is someone here who wants to go our direction
+            queue = direction == "up" ? upQueue : downQueue;
+            index = queue.indexOf(floorNum);
+            if (index >= 0 && elevator.loadFactor() < 0.7) {
+              // if yes, and we have room, stop for them
+              elevator.goToFloor(floorNum, true);
+            }
+          });
+        });
+
+        _.each(floors, function(floor) {
+
+          floor.on("up_button_pressed", function() {
+            callElevator(upQueue, floor.floorNum());
+          });
+
+          floor.on("down_button_pressed", function() {
+            callElevator(downQueue, floor.floorNum());
+          });
+        });
+
+      },
+      update: function(dt, elevators, floors) {
+        // We normally don't need to do anything here
+      }
     }
     </script>
-    <script type="text/plain" id="devtest-elev-implementation">
-    {
-        init: function(elevators, floors) {
-            var topFloor = floors.length - 1;
+    <script type="text/plain" id="devtest-elev-implementation" src="global_scheduler.js">
+        {
+            init: function(elevators, floors) {
+                var elevator = elevators[0]; // Let's use the first elevator
 
-            // kept global for easier debugging
-            var upFloors = {};
-            var downFloors = {};
-            for(var floorNum in floors){
-                upFloors[floorNum] = 0;
-                downFloors[floorNum] = 0;
-            };
-
-            /////////// register events ///////////////
-
-            for(var elevatorNum in elevators){
-                var elevator = elevators[elevatorNum];
-                registerEventsForElevators(elevator);
-
-                // additional fields needed on elevator objects
-                elevator.gdtUp = true; // general direction of travel. true: up, false: down
-                elevator.elevatorNum = elevatorNum;
-            };
-
-            for(var floorNum in floors){
-                registerUpButtonPressed(floors[floorNum]);
-                registerDownButtonPressed(floors[floorNum]);
-            };
-
-            function registerEventsForElevators(elevator){
+                // Whenever the elevator is idle (has no more queued destinations) ...
                 elevator.on("idle", function() {
-
-                    // 1.
-                    clearOrAddCurrentFloorWaiting(elevator);
-                    // 2. and 3.
-                    setNextDestinationInGDT(elevator, nextFloorInGDT(elevator));
-                    //
-                    if(elevator.destinationQueue.length === 0){
-                        reverseGdt(elevator);
-                        // 4. and 5.
-                        setNextDestinationInGDT(elevator, elevator.currentFloor());
-                    }
-                    // 6. if nothing to do, return to floor 0
-                    if(elevator.destinationQueue.length === 0){
-                        goToFloor(elevator, 0);
-                        elevator.gdtUp = false; // we don't really need this, do we?
-                    }
-
-                    // purely for good form, set indicator lights (in case we changed direction last minute)
-                    var nextStop = elevator.destinationQueue[0];
-                    var currentFloor = elevator.currentFloor();
-                    if(nextStop > currentFloor){
-                        setOneDirectionIndicator(elevator, true);
-                    } else if (nextStop < currentFloor){
-                        setOneDirectionIndicator(elevator, false);
-                    }
+                    // let's go to all the floors (or did we forget one?)
+                    elevator.goToFloor(0);
+                    elevator.goToFloor(1);
                 });
-
-                elevator.on("stopped_at_floor", function(floorNum) {
-                    setDirectionIndicatorWhenStoppedAtFloor(elevator);
-                });
-            };
-
-            function registerUpButtonPressed(floor){
-                floor.on("up_button_pressed", function() {
-                    addEntryFloor(upFloors, floor.floorNum());
-                });
-            };
-
-            function registerDownButtonPressed(floor){
-                floor.on("down_button_pressed", function() {
-                    addEntryFloor(downFloors, floor.floorNum());
-                });
-            };
-
-            ////////////// called functions ///////////////
-
-            function addEntryFloor(floorMap, floorNum){
-                floorMap[floorNum]++;
-            };
-
-            function goToFloor(elevator, floorNum){
-                elevator.goToFloor(floorNum);
-            };
-
-            function clearUpFloor(floorNum){
-                upFloors[floorNum] = 0;
-            };
-
-            function clearDownFloor(floorNum){
-                downFloors[floorNum] = 0;
-            };
-
-            function setOneDirectionIndicator(elevator, gdtUp){
-                setGoingUpIndicator(elevator, gdtUp);
-                setGoingDownIndicator(elevator, !gdtUp);
-            };
-
-            function setGoingUpIndicator(elevator, goingUp){
-                elevator.goingUpIndicator(goingUp);
-            };
-
-            function setGoingDownIndicator(elevator, goingDown){
-                elevator.goingDownIndicator(goingDown);
-            };
-
-            function isFloorSelected(floorMap, floorNum){
-                return floorMap[floorNum] !== 0;
-            };
-
-            function isElevatorFull(elevator){
-                var loadFactor = elevator.loadFactor();
-                var maxPassengerCount = elevator.maxPassengerCount();
-                var neededAvgPassengerSpace = 1.5;
-                // e.g. loadFactor = 0.91 and max 10 passengers and neededAvgPassengerSpace = 1:
-                // (1-0.91) = 0.09 < (1/10) = 0.1 so elevatorFull;
-                var elevatorFull = (1-loadFactor) < (neededAvgPassengerSpace/maxPassengerCount);
-                return elevatorFull;
-            };
-
-            function setDirectionIndicatorWhenStoppedAtFloor(elevator){
-                var currentFloor = elevator.currentFloor();
-
-                if(currentFloor === 0){
-                    elevator.gdtUp = true;
-                } else if(currentFloor === topFloor){
-                    elevator.gdtUp = false;
-                } else {
-                   // else keep gdtUp
-                }
-                setOneDirectionIndicator(elevator, elevator.gdtUp);
-            };
-
-            function clearOrAddCurrentFloorWaiting(elevator){
-                var floorNum = elevator.currentFloor();
-
-                if(isElevatorFull(elevator)){
-                    // keep entry waiting flag set for this floor in this direction
-                    if(elevator.gdtUp){
-                        addEntryFloor(upFloors, floorNum);
-                    } else {
-                        addEntryFloor(downFloors, floorNum);
-                    }
-                } else {
-                    clearEntryWaiting(elevator.gdtUp, [floorNum]);
-                }
-            };
-
-            function clearEntryWaiting(gdtUp, floorNums){
-                for(var i in floorNums){
-                    var floorNum = floorNums[i];
-
-                    if(floorNum === 0){
-                        clearUpFloor(floorNum);
-                    } else if (floorNum === topFloor){
-                        clearDownFloor(floorNum);
-                    } else if(gdtUp){
-                        clearUpFloor(floorNum);
-                    } else{
-                        clearDownFloor(floorNum);
-                    }
-                };
-            };
-
-            function setNextDestinationInGDT(elevator, searchFrom){
-                if(elevator.gdtUp){
-                    setNextDestinationAbove(elevator, searchFrom);
-                } else {
-                    setNextDestinationBelow(elevator, searchFrom);
-                }
-            };
-
-            function setNextDestinationAbove(elevator, searchFrom){
-                var nextDestination = -1;
-                var entryFloorOppositeDirection = -1;
-                var pressedFloors = elevator.getPressedFloors();
-
-                for (var floorNum = searchFrom; floorNum < floors.length; floorNum++) {
-                    if(pressedFloors.indexOf(floorNum) !== -1){
-                        clearEntryWaiting(true, [floorNum]);
-                        nextDestination = floorNum;
-                        break;
-                    }
-                    if(!isElevatorFull(elevator)){
-                        if(isFloorSelected(upFloors, floorNum)){
-                            clearEntryWaiting(true, [floorNum]);
-                            nextDestination = floorNum;
-                            break;
-                        }
-                        if(isFloorSelected(downFloors, floorNum)){
-                            entryFloorOppositeDirection = floorNum;
-                        }
-                    }
-                };
-
-                if(nextDestination === -1){
-                    if(entryFloorOppositeDirection !== -1){
-                        clearEntryWaiting(false, [entryFloorOppositeDirection]);
-                        reverseGdt(elevator);
-                        nextDestination = entryFloorOppositeDirection;
-                    }
-                }
-
-                if(nextDestination !== -1){
-                    goToFloor(elevator, nextDestination);
-                }
-            };
-
-            function setNextDestinationBelow(elevator, searchFrom){
-                var nextDestination = -1;
-                var entryFloorOppositeDirection = -1;
-                var pressedFloors = elevator.getPressedFloors();
-
-                for (var floorNum = searchFrom; floorNum >= 0; floorNum--) {
-                    if(pressedFloors.indexOf(floorNum) !== -1){
-                        clearEntryWaiting(false, [floorNum]);
-                        nextDestination = floorNum;
-                        break;
-                    }
-                    if(!isElevatorFull(elevator)){
-                        if(isFloorSelected(downFloors, floorNum)){
-                            clearEntryWaiting(false, [floorNum]);
-                            nextDestination = floorNum;
-                            break;
-                        }
-                        if(isFloorSelected(upFloors, floorNum)){
-                            entryFloorOppositeDirection = floorNum;
-                        }
-                    }
-                };
-
-                if(nextDestination === -1){
-                    if(entryFloorOppositeDirection !== -1){
-                        clearEntryWaiting(true, [entryFloorOppositeDirection]);
-                        reverseGdt(elevator);
-                        nextDestination = entryFloorOppositeDirection;
-                    }
-                }
-
-                if(nextDestination !== -1){
-                    goToFloor(elevator, nextDestination);
-                }
-            };
-
-            function nextFloorInGDT(elevator){
-                if(elevator.gdtUp){
-                    return elevator.currentFloor()+1;
-                } else {
-                    return elevator.currentFloor()-1;
-                }
-            };
-
-            function reverseGdt(elevator){
-                elevator.gdtUp = !elevator.gdtUp;
-            };
-        },
-
-        update: function(dt, elevators, floors) {
-            // We normally don't need to do anything here
-        };
-    }
+            },
+            update: function(dt, elevators, floors) {
+                // We normally don't need to do anything here
+            }
+        }
     </script>
 
 </head>

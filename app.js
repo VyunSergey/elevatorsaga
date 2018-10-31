@@ -6,7 +6,7 @@ var createEditor = function() {
         lineNumbers: true,
         indentUnit: 4,
         indentWithTabs: false,
-        theme: "solarized light",
+        theme: "solarized dark",
         mode: "javascript",
         autoCloseBrackets: true,
         extraKeys: {
