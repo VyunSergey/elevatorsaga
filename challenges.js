@@ -51,12 +51,49 @@ var requireUserCountWithinMoves = function(userCount, moveLimit) {
     };
 };
 
-var requireDemo = function(userCount, timeLimit) {
+//Function to round float at most 2 decimal places
+var numRound = function(num) {
+    return Math.round(num * 100) / 100
+};
+
+// Function to download data to a file
+var downloadData = function(data, filename, type) {
+    var file = new Blob([data], {type: type});
+    // IE10+
+    if (window.navigator.msSaveOrOpenBlob) {
+        window.navigator.msSaveOrOpenBlob(file, filename);
+        return null;
+    } else { // Others
+        var a = document.createElement("a"),
+                url = URL.createObjectURL(file);
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(function() {
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }, 0);
+        return null;
+    }
+};
+
+var requireDemo = function(timeLimit) {
     return {
         description: "Transport <span class='emphasis-color'>" + userCount + "</span> people using <span class='emphasis-color'>" + timeLimit.toFixed(0) + "</span> seconds or less",
         evaluate: function(world) {
-          if(world.elapsedTime >= timeLimit || world.transportedCounter >= userCount) {
-              return world.elapsedTime <= timeLimit && world.transportedCounter >= userCount;
+          if(world.elapsedTime >= timeLimit) {
+              var solutionName = "swiss_chris_solution";
+              var fileName = solutionName + ".txt";
+              var fileData = "Statistics for Solution: " + solutionName + "\r\n";
+              fileData = fileData + "Transported: " + numRound(world.transportedCounter) + "\r\n";
+              fileData = fileData + "Elapsed time: " + numRound(world.elapsedTime) + "\r\n";
+              fileData = fileData + "Transported per sec: " + numRound(world.transportedPerSec) + "\r\n";
+              fileData = fileData + "Max waiting time: " + numRound(world.maxWaitTime) + "\r\n";
+              fileData = fileData + "Avg waiting time: " + numRound(world.avgWaitTime) + "\r\n";
+              fileData = fileData + "Number of floors travelled: " + numRound(world.moveCount) + "\r\n";
+              downloadData(fileData, fileName, "string");
+              return world.elapsedTime < timeLimit;
           } else {
               return null;
           }
@@ -66,7 +103,7 @@ var requireDemo = function(userCount, timeLimit) {
 
 /* jshint laxcomma:true */
 var challenges = [
-     {options: {floorCount: 16, elevatorCount: 8, spawnRate: 1.5, elevatorCapacities: [6]}, condition: requireDemo(100, 100)}
+     {options: {floorCount: 16, elevatorCount: 8, spawnRate: 1.5, elevatorCapacities: [6]}, condition: requireDemo(1000)}
 /*
      {options: {floorCount: 3, elevatorCount: 1, spawnRate: 0.3}, condition: requireUserCountWithinTime(15, 60)}
     ,{options: {floorCount: 5, elevatorCount: 1, spawnRate: 0.4}, condition: requireUserCountWithinTime(20, 60)}
